@@ -1,0 +1,15 @@
+h1. COMP 4106 Artificial Intelligence
+
+
+* 3 assignmens x 15%
+* 2 quizzes x 15%
+* 1 final project x 25%
+
+A.I. books
+Russel, Norviq
+G.F. Luger 6th ed.
+
+scs.carleton.ca
+
+office hours after class
+herzberg 5th floor
