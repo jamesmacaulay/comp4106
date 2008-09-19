@@ -13,3 +13,15 @@ scs.carleton.ca
 
 office hours after class
 herzberg 5th floor
+
+
+web.mac.com/franzo1
+http://web.mac.com/franzo1/FranzHome/Welcome.html
+comp4106
+DataMining
+
+
+entropy(S) = -(decision_values.sum {|v| probability(S,v)* log(2, probability(S,v))})
+
+
+info(A, S) = entropy(values(A).sum {|v| })
