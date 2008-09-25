@@ -5,29 +5,55 @@ require 'active_support'
 class Attribute < Struct.new(:name, :values)
 end
 
-a = Attribute.new(:a, [:yes, :no])
-b = Attribute.new(:b, [:yes, :no]),
+module Math
+  def self.log2(n); log(n) / log(2); end
+end
+
+windy = Attribute.new(:windy, [:strong, :weak])
+outlook = Attribute.new(:outlook, [:sunny, :overcast, :rainy])
 decision = Attribute.new(:decision, [:yes, :no])
 
 EXAMPLES = [
-  {a => :yes, b => :no, decision => :yes},
-  {a => :yes, b => :yes, decision => :yes},
-  {a => :no, b => :yes, decision => :no},
-  {a => :no, b => :yes, decision => :no}
+  {windy => :strong,      outlook => :sunny,      decision => :yes},
+  {windy => :strong,      outlook => :sunny,      decision => :yes},
+  {windy => :strong,      outlook => :rainy,      decision => :yes},
+  {windy => :strong,      outlook => :sunny,      decision => :no},
+  {windy => :strong,      outlook => :sunny,      decision => :no},
+  {windy => :strong,      outlook => :sunny,      decision => :no},
+  {windy => :weak,        outlook => :overcast,   decision => :yes},
+  {windy => :weak,        outlook => :overcast,   decision => :yes},
+  {windy => :weak,        outlook => :overcast,   decision => :yes},
+  {windy => :weak,        outlook => :overcast,   decision => :yes},
+  {windy => :weak,        outlook => :rainy,      decision => :yes},
+  {windy => :weak,        outlook => :rainy,      decision => :yes},
+  {windy => :weak,        outlook => :rainy,      decision => :no},
+  {windy => :weak,        outlook => :rainy,      decision => :no}
 ]
+
+def subset(set, attribute, attribute_value)
+  set.select {|example| example[attribute] == attribute_value}
+end
 
 
 def probability(set, attribute, attribute_value)
-  set.select {|example| example[attribute] == attribute_value}.size.to_f / set.size.to_f
+  subset(set, attribute, attribute_value).size.to_f / set.size.to_f
 end
 
-def entropy(set, attribute)
-  sum = attribute.values.sum do |v|
-    probability = probability(set, attribute, v)
-    #p [v, probability]
-    probability * Math.log(probability)
+def entropy(set, decision_attribute)
+  decision_attribute.values.sum do |v|
+    probability = probability(set, decision_attribute, v)
+    probability.zero? ? 0.0 : -(probability * Math.log2(probability))
   end
-  sum * -1
 end
-p (Math.log(0.5))
-p entropy(EXAMPLES, decision)
+
+def info(attribute, set, decision_attribute)
+  attribute.values.sum do |v|
+    probability(set, attribute, v) * entropy(subset(set, attribute, v), decision_attribute)
+  end
+end
+
+def gain(set, attribute, decision_attribute)
+  entropy(set, decision_attribute) - info(attribute, set, decision_attribute)
+end
+
+
