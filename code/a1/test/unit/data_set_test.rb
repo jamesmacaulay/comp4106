@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__),'..','test_helper')
 
 class DataSetTest < Test::Unit::TestCase
   
-  context "DataSet" do
+  context "DecisionTree::DataSet" do
     setup do
       @set = DataSet.new(file_for_data 'weather_nominal_data.txt')
     end
@@ -56,6 +56,12 @@ class DataSetTest < Test::Unit::TestCase
       should "return the expected entropy reduction due to knowing value of given attribute" do
         assert_equal 0.048, (@set.gain('windy') * 1000).round.to_f / 1000
         assert_equal 0.247, (@set.gain('outlook') * 1000).round.to_f / 1000
+      end
+    end
+    
+    context "#max_gain_attribute" do
+      should "return the name of the attribute with the highest gain" do
+        assert_equal 'outlook', @set.max_gain_attribute
       end
     end
     

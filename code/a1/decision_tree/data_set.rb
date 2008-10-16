@@ -1,4 +1,4 @@
-module Decision
+module DecisionTree
   class DataSet
     
     attr_reader :relation, :attributes, :vectors
@@ -26,6 +26,7 @@ module Decision
     end
 
     def entropy(set = @vectors)
+      return 1.0 if set.empty?
       decision_attribute_object.values.sum do |v|
         probability = probability(@decision_attribute, v, set)
         probability.zero? ? 0.0 : -(probability * Math.log2(probability))
@@ -42,6 +43,36 @@ module Decision
       entropy(set) - info(attribute, set)
     end
     
+    def max_gain_attribute(set = @vectors, remaining_attributes = nil)
+      return nil if set.empty?
+      
+      if remaining_attributes
+        remaining_attributes = non_decision_attributes.select {|a| remaining_attributes.include?(a.name)}
+      else
+        remaining_attributes = non_decision_attributes
+      end
+      sorted = remaining_attributes.sort_by do |a|
+        gain(a.name, set)
+      end
+      sorted.last.name
+    end
+    
+    def non_decision_attributes
+      @attributes.reject {|a| a.name == @decision_attribute}
+    end
+    
+    def values_of_attribute(name)
+      @attributes.find {|a| a.name == name}.values
+    end
+    
+    def decision_value_of_vector(v)
+      v[attribute_index(@decision_attribute)]
+    end
+    
+    def attribute_index(name)
+      attributes.map(&:name).index(name)
+    end
+    
     private
     
     def attribute_object(name)
@@ -50,10 +81,6 @@ module Decision
     
     def decision_attribute_object
       attribute_object(@decision_attribute)
-    end
-    
-    def attribute_index(name)
-      attributes.map(&:name).index(name)
     end
     
     def parse_line(line)

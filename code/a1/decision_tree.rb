@@ -4,9 +4,10 @@ require 'active_support'
 require 'tree'
 
 require 'lib/math_ext'
+require 'lib/tree_ext'
 
 
-module Decision
+module DecisionTree
   def self.subset(set, attribute, attribute_value)
     set.select {|example| example[attribute] == attribute_value}
   end
@@ -35,5 +36,6 @@ module Decision
 end
 
 
-require 'decision/attribute'
-require 'decision/data_set'
+require 'decision_tree/attribute'
+require 'decision_tree/data_set'
+require 'decision_tree/base'
