@@ -18,29 +18,47 @@ module DecisionTree
 
     def subset(attribute, value, set = @vectors)
       index = attribute_index(attribute)
-      set.select {|v| v[index] == value}
+      if value.is_a?(Array)
+        if value.first == '<'
+          set.select {|v| v[index] < value.last}
+        else
+          set.select {|v| v[index] >= value.last}
+        end
+      else
+        set.select {|v| v[index] == value}
+      end
     end
 
     def probability(attribute, value, set = @vectors)
-      subset(attribute, value, set).size.to_f / set.size.to_f
+      a,b = subset(attribute, value, set).size.to_f, set.size.to_f
+      #puts "        probability of attribute #{attribute} with value #{value} in that set is (#{a}/#{b}) = #{a/b}"
+      a/b
     end
 
     def entropy(set = @vectors)
       return 1.0 if set.empty?
-      decision_attribute_object.values.sum do |v|
+      #puts "      calculating entropy of set with #{set.size} examples..."
+      values = decision_attribute_object.values.map do |v|
         probability = probability(@decision_attribute, v, set)
         probability.zero? ? 0.0 : -(probability * Math.log2(probability))
       end
+      e = values.sum
+      #puts "      entropy of set with #{set.size} examples is (#{values.map {|v| "(#{v})"}.join(" + ")}) = #{e}"
+      e
     end
 
     def info(attribute, set = @vectors)
+      #puts "      calculating info"
       attribute_object(attribute).values.sum do |v|
         probability(attribute, v, set) * entropy(subset(attribute, v, set))
       end
     end
   
     def gain(attribute, set = @vectors)
-      entropy(set) - info(attribute, set)
+      #puts "    calculating gain of attribute #{attribute}..."
+      g = entropy(set) - info(attribute, set)
+      #puts "    gain of attribute #{attribute} is #{g}"
+      g
     end
     
     def max_gain_attribute(set = @vectors, remaining_attributes = nil)

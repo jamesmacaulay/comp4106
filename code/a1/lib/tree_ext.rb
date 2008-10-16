@@ -3,15 +3,19 @@ module Tree
     def printTree(level = 0)
 
       if isRoot?
-        print "*"
-        puts " #{content}"
+        #print "*"
+        puts " determine #{content}"
       else
-        print "|" unless parent.isLastSibling?
-        print(' ' * (level - 1) * 4)
-        print(isLastSibling? ? "+" : "|")
-        print "---"
-        print(hasChildren? ? "+" : ">")
-        puts " {#{parent.content} => #{name}} : #{content}"
+        #print "|" unless parent.isLastSibling?
+        print(' ' * (level) * 4)
+        #print(isLastSibling? ? "+" : "|")
+        #print "---"
+        #print(hasChildren? ? "+" : ">")
+        if content
+          puts " {#{parent.content}: #{name}} -> determine #{content}"
+        else
+          puts " {#{parent.content}: #{name}}"
+        end
       end
 
 

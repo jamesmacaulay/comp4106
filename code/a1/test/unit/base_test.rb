@@ -13,7 +13,18 @@ class BaseTest < Test::Unit::TestCase
       end
       
       should "make the right tree" do
-        @tree.root.printTree
+        @tree.prettyprint
+      end
+    end
+    
+    context "with numeric values" do
+      setup do
+        @set = DataSet.new(file_for_data 'weather_numeric_data.txt')
+        @tree = Base.new(@set)
+      end
+      
+      should "make the right tree" do
+        @tree.prettyprint
       end
     end
     
