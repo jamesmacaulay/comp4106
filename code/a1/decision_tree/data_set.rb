@@ -15,9 +15,9 @@ module DecisionTree
         @vectors = filename_or_other_set.vectors[range]
       else
         File.open(filename_or_other_set, 'r') do |io|
-          line_num = 0
+          #line_num = 0
           io.each do |line|
-            puts "line #{line_num += 1}" if line_num % 500 == 0
+            #puts "line #{line_num += 1}" if line_num % 500 == 0
             parse_line(line)
           end
         end
@@ -27,20 +27,12 @@ module DecisionTree
     
     def half_sets
       mid = ((vectors.size - 1) / 2)
-      [self.class.new(self, 0..mid), self.class.new(self, ((mid + 1)..-1))]
+      [self.class.new(self, :range => 0..mid), self.class.new(self, :range => ((mid + 1)..-1))]
     end
 
     def subset(attribute, value, set = @vectors)
       index = attribute_index(attribute)
-      if value.is_a?(Array)
-        if value.first == '<'
-          set.select {|v| v[index] < value.last}
-        else
-          set.select {|v| v[index] >= value.last}
-        end
-      else
-        set.select {|v| v[index] == value}
-      end
+      set.select {|v| Attribute.value_match(v[index], value)}
     end
 
     def probability(attribute, value, set = @vectors)
@@ -151,11 +143,19 @@ module DecisionTree
     end
     
     def parse_vector(line)
-      @vectors << line.split(/\,/).map {|val| converted_value(val)}
+      vector = []
+      line.split(/\,/).each_with_index do |val, index|
+        vector << converted_value(val, attributes[index])
+      end
+      
+      @vectors << vector
     end
     
-    def converted_value(val)
+    def converted_value(val, attribute_object = nil)
       case val
+      when '?'
+        attribute_object.values << '?' unless attribute_object.nil? or attribute_object.values.include?('?')
+        val
       when /^\d+\.\d+$/
         val.to_f
       when /^\d+$/

@@ -15,10 +15,15 @@ module DecisionTree
     
     def decide(vector, node = @root)
       attribute = node.content
-      return node.name if attribute.nil?
+      return node.firstChild.name if attribute == @set.decision_attribute
       
-      value = @set.vector_value(vector, attribute)
-      #node.children.find { |child| child.}
+      vector_value = @set.vector_value(vector, attribute)
+      right_child = node.children.find { |child| Attribute.value_match(vector_value, child.name) }
+      return decide(vector, right_child)
+    end
+    
+    def correct?(vector)
+      decide(vector) == @set.decision_value_of_vector(vector)
     end
     
     private
@@ -52,7 +57,7 @@ module DecisionTree
     # a node's CONTENT is a possible result for its parent's query
     # a node's NAME is the attribute which will next be decided because of that result
     def generate_nodes(parent = nil, vectors = nil)
-      #puts "generate_nodes(#{[parent.name, parent.content].inspect}, [#{vectors.size} vectors])"
+      #puts "generate_nodes(#{[parent.name, parent.content].inspect}, [#{vectors.size} vectors])" unless parent.nil?
       vectors ||= @set.vectors
       remaining_attributes = parent.nil? ? @set.non_decision_attributes.map(&:name) : (@set.non_decision_attributes.map(&:name) - ancestor_attributes(parent))
       unless parent.nil?

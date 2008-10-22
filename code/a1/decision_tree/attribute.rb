@@ -16,5 +16,20 @@ module DecisionTree
     def comparison_value=(val)
       @values = [['<',val],['>=',val]]
     end
+    
+    def self.value_match(v1,v2)
+      if v1.is_a?(Array)
+        v1,v2 = v2,v1
+      end
+      if v2.is_a?(Array)
+        if v2.first == '<'
+          return v1 < v2.last
+        else
+          return v1 >= v2.last
+        end
+      else
+        return v1 == v2
+      end
+    end
   end
 end
