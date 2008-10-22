@@ -4,16 +4,30 @@ module DecisionTree
     attr_reader :relation, :attributes, :vectors
     attr_accessor :decision_attribute
     
-    def initialize(filename)
+    def initialize(filename_or_other_set, options = {})
       @relation = ''
       @attributes = []
       @vectors = []
-      File.open(filename, 'r') do |io|
-        io.each do |line|
-          parse_line(line)
+      if filename_or_other_set.is_a?(DataSet)
+        range = options[:range] || (0..-1)
+        @relation = filename_or_other_set.relation
+        @attributes = filename_or_other_set.attributes
+        @vectors = filename_or_other_set.vectors[range]
+      else
+        File.open(filename_or_other_set, 'r') do |io|
+          line_num = 0
+          io.each do |line|
+            puts "line #{line_num += 1}" if line_num % 500 == 0
+            parse_line(line)
+          end
         end
       end
       @decision_attribute = @attributes.map(&:name).last
+    end
+    
+    def half_sets
+      mid = ((vectors.size - 1) / 2)
+      [self.class.new(self, 0..mid), self.class.new(self, ((mid + 1)..-1))]
     end
 
     def subset(attribute, value, set = @vectors)
@@ -91,6 +105,18 @@ module DecisionTree
       attributes.map(&:name).index(name)
     end
     
+    def best_value(attribute_name, vectors = @vectors)
+      attribute = attribute_object(attribute_name)
+      #p attribute
+      attribute.values.max do |a,b|
+        probability(attribute.name, a, vectors) <=> probability(attribute.name, b, vectors)
+      end
+    end
+    
+    def vector_value(vector,attribute_name)
+      vector[attribute_index(attribute_name)]
+    end
+    
     private
     
     def attribute_object(name)
@@ -102,7 +128,7 @@ module DecisionTree
     end
     
     def parse_line(line)
-      stripped = line.strip
+      stripped = line.strip.gsub(/\'/,'')
       case stripped.first
       when '%','':  return nil
       when '@':     parse_declaration(stripped)
@@ -114,7 +140,7 @@ module DecisionTree
       case line
       when /^\s*@relation\s+(\w+)$/
         @relation = $1
-      when /^\s*@attribute\s+(\w+)\s+\{(.*)\}$/
+      when /^\s*@attribute\s+(\S+)\s+\{(.*)\}$/
         name,values = $1, $2
         values = values.split(/\s*\,\s*/)
         @attributes << Attribute.new(name, values.map {|v| converted_value(v)})
@@ -135,7 +161,7 @@ module DecisionTree
       when /^\d+$/
         val.to_i
       else
-        val
+        val.strip
       end
     end
     

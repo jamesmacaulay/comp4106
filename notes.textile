@@ -25,3 +25,5 @@ entropy(S) = -(decision_values.sum {|v| probability(S,v)* log(2, probability(S,v
 
 
 info(A, S) = entropy(values(A).sum {|v| })
+
+vpetro@gmail.com
