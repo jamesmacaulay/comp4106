@@ -22,6 +22,7 @@ module DecisionTree
         v1,v2 = v2,v1
       end
       if v2.is_a?(Array)
+        return false unless v1.is_a?(Numeric)
         if v2.first == '<'
           return v1 < v2.last
         else

@@ -19,6 +19,11 @@ module DecisionTree
       
       vector_value = @set.vector_value(vector, attribute)
       right_child = node.children.find { |child| Attribute.value_match(vector_value, child.name) }
+      if right_child.nil?
+        p vector
+        p [attribute, vector_value]
+        p node.children.map(&:name)
+      end
       return decide(vector, right_child)
     end
     
@@ -32,6 +37,7 @@ module DecisionTree
       vectors ||= @set.vectors
       remaining_attributes ||= @set.attributes.map(&:name)
       remaining_attributes.each do |att|
+        #missing_values = @set.values_of_attribute(att).include?('?')
         att = @set.attributes.find {|a| a.name == att}
         if att.kind == :real
           sorted_values = vectors.map {|v| v[@set.attribute_index(att.name)]}.reject {|v| v == '?'}.sort
@@ -51,6 +57,7 @@ module DecisionTree
           end
           att.comparison_value = best_condition_value
         end
+        #att.values << '?' if missing_values
       end
     end
     
@@ -96,6 +103,9 @@ module DecisionTree
         #   p parent
         #   p attribute
         # end
+        if parent.content == "standby-pay"
+          p @set.values_of_attribute(parent.content)
+        end
         @set.values_of_attribute(parent.content).each do |value|
           value_set = @set.subset(parent.content, value, vectors)
           # puts "value_set = @set.subset(#{parent.content.inspect}, #{value.inspect}, [#{vectors.size} vectors])"

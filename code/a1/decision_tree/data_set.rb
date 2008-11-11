@@ -130,13 +130,13 @@ module DecisionTree
     
     def parse_declaration(line)
       case line
-      when /^\s*@relation\s+(\w+)$/
+      when /^\s*@(?:relation|RELATION)\s+(\S+)$/
         @relation = $1
-      when /^\s*@attribute\s+(\S+)\s+\{(.*)\}$/
+      when /^\s*@(?:attribute|ATTRIBUTE)\s+(\S+)\s+\{(.*)\}$/
         name,values = $1, $2
         values = values.split(/\s*\,\s*/)
         @attributes << Attribute.new(name, values.map {|v| converted_value(v)})
-      when /^\s*@attribute\s+(\w+)\s+(\w+)$/
+      when /^\s*@(?:attribute|ATTRIBUTE)\s+(\S+)\s+(\S+)$/
         name, type = $1, $2
         @attributes << Attribute.new(name, type.downcase.to_sym)
       end
@@ -148,13 +148,13 @@ module DecisionTree
         vector << converted_value(val, attributes[index])
       end
       
-      @vectors << vector
+      @vectors << vector unless vector.include?('?')
     end
     
     def converted_value(val, attribute_object = nil)
       case val
       when '?'
-        attribute_object.values << '?' unless attribute_object.nil? or attribute_object.values.include?('?')
+        #attribute_object.values << '?' unless attribute_object.nil? or attribute_object.values.include?('?')
         val
       when /^\d+\.\d+$/
         val.to_f
