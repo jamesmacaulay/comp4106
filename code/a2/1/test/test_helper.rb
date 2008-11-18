@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__),'..','slidey')
+require File.join(File.dirname(__FILE__),'..','lamp')
 require 'test/unit'
 require 'shoulda'
 require 'ruby-debug'
