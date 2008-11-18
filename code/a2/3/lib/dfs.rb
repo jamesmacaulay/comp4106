@@ -1,9 +1,9 @@
 class DFS < Search
   
-  def initialize(*tiles)
+  def initialize(tiles, goal_tiles=nil)
     @closed = Set.new
     # @closed = {}
-    super(*tiles)
+    super(tiles, goal_tiles)
   end
   
   def first_open_move

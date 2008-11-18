@@ -124,8 +124,8 @@ class BoardTest < Test::Unit::TestCase
     end
     
     context "#estimated_moves_to_goal" do
-      should "return the sum of all goal distances divided by 2, rounding up" do
-        assert_equal 7, @board.estimated_moves_to_goal
+      should "return the sum of all tiles' goal distances, not including the blank space" do
+        assert_equal 12, @board.estimated_moves_to_goal
       end
     end
     
@@ -135,6 +135,17 @@ class BoardTest < Test::Unit::TestCase
         @board.undo
         assert_equal [], @board.moves
         assert_equal Board.valid_sorted_tiles, @board.to_a
+      end
+    end
+    
+    context ".parity" do
+      should "take a tile array and return its parity of permutation (0 for even, 1 for odd)" do
+        assert_equal 0, Board.parity([0,1,2,3,4,5,6,7,8])
+        assert_equal 0, Board.parity([1,2,3,4,5,6,7,8,0])
+        assert_equal 1, Board.parity([1,2,3,4,5,6,8,7,0])
+        assert_equal 1, Board.parity([1,2,3,8,0,4,7,6,5]) # example goal board
+        assert_equal 0, Board.parity([5,4,0,6,1,8,7,3,2]) # trickery!
+        assert_equal 1, Board.parity([1,2,0,8,4,3,7,6,5])
       end
     end
     

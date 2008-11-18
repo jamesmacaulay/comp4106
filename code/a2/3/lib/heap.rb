@@ -1,4 +1,4 @@
-#from http://rubyquiz.com/quiz40.html
+#from http://rubyquiz.com/quiz40.html, with modifications
 
 class Heap
     def initialize( *elements, &comp )
@@ -43,6 +43,10 @@ class Heap
 
     def to_s(  )
         # Write this!
+    end
+    
+    def include?(element)
+      @heap.include?(element)
     end
 
     private

@@ -76,15 +76,27 @@ class Board
   end
   
   def estimated_moves_to_goal
-    (@tiles.sum {|n| distance_to_goal(n)} / 2.0).ceil
+    Board.estimated_moves_to_goal(@tiles, goal_tiles)
   end
   
-  def estimated_moves_to_goal_2
-    @tiles.sum {|n| distance_to_goal(n)}
+  def misplaced_tile_count
+    Board.misplaced_tile_count(@tiles, goal_tiles)
   end
   
-  def distance_to_goal(num = nil)
-    i1 = @tiles.index(num)
+  def self.estimated_moves_to_goal(tiles, goal_tiles)
+    tiles.sum {|n| n == 0 ? 0 : distance_to_goal(n, tiles, goal_tiles)}
+  end
+  
+  def self.misplaced_tile_count(tiles, goal_tiles)
+    tiles.sum {|n| (n == 0 || goal_tiles.index(n) == tiles.index(n)) ? 0 : 1}
+  end
+  
+  def distance_to_goal(num)
+    Board.distance_to_goal(num,@tiles,goal_tiles)
+  end
+  
+  def self.distance_to_goal(num, tiles, goal_tiles)
+    i1 = tiles.index(num)
     i2 = goal_tiles.index(num)
     Board.distance(i1,i2)
   end

@@ -7,6 +7,7 @@ libs = %w{
   array_ext
   board
   node
+  heap
   search
   dfs
   a_star
