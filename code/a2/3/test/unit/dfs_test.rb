@@ -4,7 +4,8 @@ class DFSTest < Test::Unit::TestCase
   context "DFS" do
     setup do
       #@dfs = DFS.new([5,4,0,6,1,8,7,3,2]) # unsolvable!
-      @dfs = DFS.new([1,2,0,8,4,3,7,6,5])
+      #@dfs = DFS.new([1,2,0,8,4,3,7,6,5]) # easy
+      @dfs = DFS.new([5,4,0,6,1,8,7,2,3]) # hard
     end
     
     context "#go" do

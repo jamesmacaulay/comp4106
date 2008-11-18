@@ -1,24 +1,17 @@
 class Node
-  attr_reader :board
+  attr_reader :tiles
   
-  attr_accessor :g, :h
+  attr_accessor :parent, :g, :h
   
-  def initialize(board)
+  def initialize(parent,direction)
+    @parent,@direction = parent,direction
+    @tiles = board.to_a
     @g,@h = nil
-    @board = board
-  end
-  
-  def parent
-    if board.moves.empty?
-      nil
-    else
-      Node.new(board.dup.undo)
-    end
   end
   
   def successors
-    board.possible_moves.map do |direction|
-      Node.new(board.dup.move_blank(direction))
+    board.possible_moves.map do |dir|
+      Node.new(self,dir)
     end
   end
   
@@ -27,9 +20,13 @@ class Node
     g + h
   end
   
-  # def tiles
-  #   @tiles.dup
-  # end
+  def tiles
+    @board.to_a
+  end
+  
+  def board
+    parent.board.neighbour(direction)
+  end
 
   # def possible_moves
   #   board.possible_moves

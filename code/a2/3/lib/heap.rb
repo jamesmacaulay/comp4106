@@ -40,16 +40,51 @@ class Heap
     def inspect(  )
         @heap[1..-1].inspect
     end
-
-    def to_s(  )
-        # Write this!
-    end
     
     def include?(element)
       @heap.include?(element)
     end
+    
+    def empty?
+      @heap.empty?
+    end
+    
+    def re_sort
+      old = @heap[1..-1].dup
+      clear
+      insert(*old)
+      self
+    end
+    
+    def to_s( )
+      return "[empty heap]" if @heap.size <= 1
+      print_node("", "", true, true, 1).gsub!(/^[+ ]/, "")
+    end
 
     private
+
+    def left_index( index )  ; index * 2     ; end
+    def right_index( index ) ; index * 2 + 1 ; end
+    def has_left?( index )  ; left_index(index)  < @heap.size ; end
+    def has_right?( index ) ; right_index(index) < @heap.size ; end
+
+    def print_node( result, line, right, left, index )
+      if has_right?(index)
+        print_node( result, line + (right ? '  ' : '| '), true, false,
+                    right_index(index) )
+        result << "#{line}#{right ? ' ' : '|'} |\n"
+      end
+
+      result << "#{line}+-o #{@heap[index]}\n"
+
+      if has_left?(index)
+        result << "#{line}#{left ? ' ' : '|'} |\n"
+        print_node( result, line + (left ? '  ' : '| '), false, true,
+                    left_index(index) )
+      end
+
+      result
+    end
 
     def sift_down(  )
         i = 1

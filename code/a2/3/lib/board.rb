@@ -11,8 +11,7 @@ class Board
   attr_accessor :goal_tiles
   DEFAULT_GOAL_TILES = [1,2,3,8,0,4,7,6,5]
   
-  def initialize(*ary)
-    ary = ary.flatten
+  def initialize(ary, goal_tiles=nil)
     if ary.empty?
       @tiles = Board.valid_sorted_tiles.randomize
     elsif ary.uniq.sort != Board.valid_sorted_tiles
@@ -22,7 +21,7 @@ class Board
     end
     @starting_tiles = @tiles.dup
     @moves = []
-    @goal_tiles = DEFAULT_GOAL_TILES
+    @goal_tiles = goal_tiles || DEFAULT_GOAL_TILES
   end
   
   def move_blank(dir, traceless=false)
@@ -51,7 +50,7 @@ class Board
   
   def blank_can_move?(dir)
     dir = dir.to_s
-    raise ArgumentError.new("Must give 'up', 'down', 'left', or 'right'") unless DIRECTIONS[dir]
+    raise ArgumentError.new("Must give 'up', 'down', 'left', or 'right'. Got #{dir.inspect} instead.") unless DIRECTIONS[dir]
     DIRECTIONS[dir].first.include?(blank_index)
   end
   
@@ -83,12 +82,20 @@ class Board
     Board.misplaced_tile_count(@tiles, goal_tiles)
   end
   
+  def average_heuristic
+    (estimated_moves_to_goal + misplaced_tile_count) / 2
+  end
+  
   def self.estimated_moves_to_goal(tiles, goal_tiles)
     tiles.sum {|n| n == 0 ? 0 : distance_to_goal(n, tiles, goal_tiles)}
   end
   
   def self.misplaced_tile_count(tiles, goal_tiles)
     tiles.sum {|n| (n == 0 || goal_tiles.index(n) == tiles.index(n)) ? 0 : 1}
+  end
+  
+  def self.average_heuristic(tiles, goal_tiles)
+    (self.estimated_moves_to_goal(tiles, goal_tiles) + self.misplaced_tile_count(tiles, goal_tiles)) / 2
   end
   
   def distance_to_goal(num)
@@ -120,6 +127,29 @@ class Board
     Board.parity(@tiles) == Board.parity(goal_tiles)
   end
   
+  def self.random(goal_tiles = nil, unsolvable=false)
+    first = new([], goal_tiles)
+    unless unsolvable ^ first.solvable?
+      tiles = first.to_a
+      index = (tiles[0] == 0 || tiles[3] == 0) ? 1 : 0
+      temp = tiles[index]
+      tiles[index] = tiles[index + 3]
+      tiles[index + 3] = temp
+      good = new(tiles,goal_tiles)
+    else
+      good = first
+    end
+    good
+  end
+  
+  def self.random_solvable(goal_tiles=nil)
+    random(goal_tiles)
+  end
+  
+  def self.random_unsolvable(goal_tiles=nil)
+    random(goal_tiles,true)
+  end
+  
   def self.parity(perm)
     sum = pairs.sum do |x,y|
       if x < y and perm.index(x) < perm.index(y)
@@ -145,6 +175,10 @@ class Board
   
   def self.valid_sorted_tiles
     (0..8).to_a
+  end
+  
+  def self.direction(first,second)
+    {-3 => 'up', +3 => 'down', -1 => 'left', +1 => 'right'}[second - first]
   end
   
   def self.opposite(dir)

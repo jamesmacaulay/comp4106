@@ -10,7 +10,7 @@ class BoardTest < Test::Unit::TestCase
     context "#initialize" do
       context "when given nothing" do
         setup do
-          @board = Board.new
+          @board = Board.new([])
         end
         should "produce a board with a valid arrangement of tiles" do
           assert_equal(Board.valid_sorted_tiles, @board.to_a.sort)
@@ -33,7 +33,7 @@ class BoardTest < Test::Unit::TestCase
     
       context "when given an array with values 0..8 in some order" do
         setup do
-          @board = Board.new([2,1],[0,3,5],[4,7,6],8)
+          @board = Board.new([2, 1, 0, 3, 5, 4, 7, 6, 8])
         end
 
         should "produce a board with the tiles in that order" do
@@ -148,6 +148,40 @@ class BoardTest < Test::Unit::TestCase
         assert_equal 1, Board.parity([1,2,0,8,4,3,7,6,5])
       end
     end
+    
+    context ".random" do
+
+      should "create solvable boards on demand" do
+        100.times do
+          assert Board.random.solvable?
+        end
+      end
+
+      should "create unsolvable boards on demand" do
+        100.times do
+          assert !Board.random(nil,true).solvable?
+        end
+      end
+    end
+    
+    context ".random_solvable" do
+
+      should "create solvable boards on demand" do
+        100.times do
+          assert Board.random_solvable.solvable?
+        end
+      end
+    end
+    
+    context ".random_unsolvable" do
+
+      should "create unsolvable boards on demand" do
+        100.times do
+          assert !Board.random_unsolvable.solvable?
+        end
+      end
+    end
+    
     
   
   end
