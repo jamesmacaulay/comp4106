@@ -3,7 +3,8 @@ require File.join(File.dirname(__FILE__),'..','test_helper')
 class AStarTest < Test::Unit::TestCase
   context "Benchmarks" do
     setup do
-      @a = AStar.new([5,4,0,6,1,8,7,2,3],[1,2,3,8,0,4,7,6,5])
+      @a = AStar.new([0,1,2,5,6,3,4,7,8],[1,2,3,8,0,4,7,6,5])
+      #@a = AStar.new([5,4,0,6,1,8,7,2,3],[1,2,3,8,0,4,7,6,5])
       #@a = AStar.new([1,2,0,8,4,3,7,6,5],[1,2,3,8,0,4,7,6,5])
       #@a = AStar.new([1,2,3,0,8,4,7,6,5],[1,2,3,8,0,4,7,6,5])
     end
@@ -30,6 +31,7 @@ class AStarTest < Test::Unit::TestCase
       #   puts "misplaced_tile_count"
       #   @a.heuristic_method = :misplaced_tile_count
       #   time { @a.go }
+      #   puts "#{@a.examined_state_count} examined states"
       #   assert @a.solved?
       # end
       
@@ -40,6 +42,7 @@ class AStarTest < Test::Unit::TestCase
       #   puts "average_heuristic"
       #   @a.heuristic_method = :average_heuristic
       #   time { @a.go }
+      #   puts "#{@a.examined_state_count} examined states"
       #   assert @a.solved?
       # end
       

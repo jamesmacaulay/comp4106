@@ -1,8 +1,8 @@
 class State
-  A,B,C,D,E,LAMP = %w{A B C D E *}
-  PEOPLE = Set.new([A,B,C,D,E])
+  A,B,C,D,E,F,LAMP = %w{A B C D E F *}
+  PEOPLE = Set.new([A,B,C,D,E,F])
   OBJECTS = Set.new(PEOPLE + [LAMP])
-  PEOPLE_SPEED = {A => 1, B => 3, C => 6, D => 8, E => 12}
+  PEOPLE_SPEED = {A => 1, B => 3, C => 6, D => 8, E => 12, F => 8}
   attr_reader :objects_near, :time_left
   
   def initialize(objects_near = nil, time_left = 30)
