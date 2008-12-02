@@ -1,18 +1,20 @@
 class Plant
-  attr_reader :max_core_heating, :max_volume, :time, :temp_range, :temp, :volume, :controller
+  attr_reader :max_core_heating, :max_volume, :time, :temp_range, :temp, :volume, :controller, :rate_ranges, :max_drain, :error
   alias_method :n, :max_core_heating
   alias_method :x, :max_volume
   
   def initialize(options = {})
-    options.reverse_merge!( :max_core_heating      => 10,
-                            :max_volume            => 1000,
+    options.reverse_merge!( :max_core_heating      => 2.0,
+                            :max_volume            => 500,
                             :temp_range            => 10..70,
-                            :volume                => 750,
-                            :temp                  => 30 )
+                            :volume                => 375,
+                            :temp                  => 30,
+                            :max_drain             => 15.0 )
                             
     @max_core_heating = options[:max_core_heating]
     @max_volume       = options[:max_volume]
     @temp_range       = options[:temp_range]
+    @max_drain        = options[:max_drain]
     @rate_ranges = { :hot_water => 1..10, :cold_water => 1..10, :core_heating => 0..@max_core_heating }
     @history          = []
     @history          << { :temp   => options[:temp],
@@ -22,6 +24,17 @@ class Plant
                                         :core_heating => new_rate(:core_heating)},
                            :restrictions => { :hot_water => 0.0, :cold_water => 0.0, :drain => 0.0 }}
     @controller = FuzzyController.new(self)
+    @error = nil
+  end
+  
+  def start_reactor(limit=10000)
+    limit.times do
+      increment_time
+    end
+  rescue StandardError => e
+    @error = e
+  ensure
+    return self
   end
   
   ### usable by FuzzyController#adjust
@@ -64,13 +77,12 @@ class Plant
   end
   
   def rate(sym)
-    return 15.0 if sym == :drain
+    return @max_drain if sym == :drain
     @history.empty? ? nil : @history.last[:rates][sym]
   end
   
   def restricted_rate(sym)
-    debugger if rate(sym).nil? or restriction(sym).nil?
-    rate(sym) * restriction(sym)
+    rate(sym) * (1.0 - restriction(sym))
   end
   
   def restriction(sym)
@@ -82,12 +94,18 @@ class Plant
   end
   
   def increment_time
+    
+    @controller.make_adjustments
+    
+    #p @history.last
+    
     new_volume = volume - restricted_rate(:drain) + restricted_rate(:cold_water) + restricted_rate(:hot_water)
-    raise StandardError, "Too little water left in tank!" if new_volume < (max_volume.to_f / 2)
+    raise StandardError, "Overfilled! (volume reached #{new_volume})" if new_volume >= max_volume.to_f
+    raise StandardError, "Underfilled! (volume reached #{new_volume})" if new_volume < (max_volume.to_f / 2)
     
     new_temp = ((5 * restricted_rate(:cold_water)) + (95 * restricted_rate(:hot_water)) + (temp * (volume - restricted_rate(:drain)))) / new_volume + rate(:core_heating)
-    raise StandardError, "Tank is too hot!" if new_temp > temp_range.max
-    raise StandardError, "Tank is too cold!" if new_temp < temp_range.min
+    raise StandardError, "Melt-down! (temperature reached #{new_temp})" if new_temp > temp_range.max
+    raise StandardError, "Shut-down! (temperature reached #{new_temp})" if new_temp < temp_range.min
     
     @history << {
       :temp => new_temp,
@@ -96,7 +114,6 @@ class Plant
                    :cold_water   => new_rate(:cold_water),
                    :core_heating => new_rate(:core_heating)}
     }
-    p @history.last
   end
   
   private
@@ -114,12 +131,13 @@ class Plant
       max_diff = [(max - prev).abs, (min - prev).abs].max
       mod = 2.0 - (max_diff.zero? ? 0 : (accel / max_diff))
       rel = rnd - prev
-      result = rel * rel.abs / (max_diff * mod) + prev
+      result = rel * Math.sqrt(rel.abs) / (max_diff * mod) + prev
       return result
     end
   end
   
   def random_within_range(rng)
+    srand
     rand * (rng.max - rng.min) + rng.min
   end
   

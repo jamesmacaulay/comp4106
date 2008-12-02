@@ -1,0 +1,31 @@
+<h4><%= @plant.error.message %></h4>
+
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["motionchart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = new google.visualization.DataTable();
+        data.addRows(<%= plant.history.length %>);
+        data.addColumn('string', 'Trial');
+        data.addColumn('date', 'Date');
+        data.addColumn('number', 'Hot Water Input Rate');
+        data.addColumn('number', 'Cold Water Input Rate');
+        data.addColumn('number', 'Tank Temperature');
+        data.addColumn('number', 'Water Volume');
+        data.addColumn('number', 'Core Heating Rate');
+<% plant.history.each_with_index do |data,t| %>
+        <%= "data.setValue(#{t}, 0, '1');" %>
+        <%= "data.setValue(#{t}, 1, new Date (0,0,#{t}));" %>
+        <%= "data.setValue(#{t}, 2, #{data[:rates][:hot_water]});" %>
+        <%= "data.setValue(#{t}, 3, #{data[:rates][:cold_water]});" %>
+        <%= "data.setValue(#{t}, 4, #{data[:temp]});" %>
+        <%= "data.setValue(#{t}, 5, #{data[:volume]});" %>
+        <%= "data.setValue(#{t}, 6, #{data[:rates][:core_heating]});" %>
+<% end %>
+        var chart = new google.visualization.MotionChart(document.getElementById('chart_div'));
+        chart.draw(data, {width: 800, height:400});
+      }
+    </script>
+    
+<div id="chart_div" style="width: 800px; height: 400px;"></div>

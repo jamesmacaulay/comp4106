@@ -1,6 +1,7 @@
 require File.join(File.dirname(__FILE__),'..','reactor')
 require 'test/unit'
 require 'shoulda'
+require 'mocha'
 require 'ruby-debug'
 require 'benchmark'
 

@@ -1,0 +1,14 @@
+
+
+<%= render :partial => 'plant', :object => @plant if @plant %>
+
+
+<% form_for root_path do %>
+  <dl>
+    <dt><%= label_tag 'N', 'Max core heating in degrees/sec (N)' %></dt>
+    <dd><%= text_field_tag 'N', '2.0' %></dd>
+    <dt><%= label_tag 'X', 'Max water volume in litres (X)' %></dt>
+    <dd><%= text_field_tag 'X', '500' %></dd>
+  </dl>
+  <%= submit_tag 'Start Reactor' %>
+<% end %>
