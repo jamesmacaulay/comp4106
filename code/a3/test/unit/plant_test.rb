@@ -6,13 +6,21 @@ class PlantTest < Test::Unit::TestCase
 
     context "#initialize" do
       should "take a hash of options and produce a corresponding core" do
-        plant = Plant.new(:max_core_heating => 1, :max_volume => 2, :temp => 3, :volume => 4)
-        assert_equal 1, plant.max_core_heating
-        assert_equal 2, plant.max_volume
-        assert_equal 10, plant.min_temp
-        assert_equal 70, plant.max_temp
-        assert_equal 3, plant.temp
-        assert_equal 4, plant.volume
+        plant = Plant.new
+        assert_equal 10, plant.max_core_heating
+        assert_equal 1000, plant.max_volume
+        assert_equal 10..70, plant.temp_range
+        assert_equal 30, plant.temp
+        assert_equal 750, plant.volume
+        
+        p plant.history.last
+        
+        100.times do
+          plant.cold_water_restriction = 0.5
+          plant.hot_water_restriction = 0.5
+          plant.drain_restriction = 0.5
+          plant.increment_time
+        end
       end
     end
     
