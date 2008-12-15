@@ -11,11 +11,12 @@ class Plant
                             :temp                  => 30,
                             :max_drain             => 15.0 )
                             
+    options[:volume] = 0.75 * options[:max_volume]
     @max_core_heating = options[:max_core_heating]
     @max_volume       = options[:max_volume]
     @temp_range       = options[:temp_range]
     @max_drain        = options[:max_drain]
-    @rate_ranges = { :hot_water => 1..10, :cold_water => 1..10, :core_heating => 0..@max_core_heating }
+    @rate_ranges = { :hot_water => {:min => 1, :max => 10}, :cold_water => {:min => 1, :max => 10}, :core_heating => {:min => 0, :max => @max_core_heating} }
     @history          = []
     @history          << { :temp   => options[:temp],
                            :volume => options[:volume],
@@ -32,7 +33,7 @@ class Plant
       increment_time
     end
   rescue StandardError => e
-    @error = e
+   @error = e
   ensure
     return self
   end
@@ -119,10 +120,9 @@ class Plant
   private
   
   def new_rate(sym)
-    rng = @rate_ranges[sym]
-    min,max = rng.min, rng.max
+    min,max = @rate_ranges[sym][:min], @rate_ranges[sym][:max]
     prev = rate(sym)
-    rnd = random_within_range(rng)
+    rnd = random_within_range(min,max)
     if @history.empty?
       return rnd
     else
@@ -136,9 +136,9 @@ class Plant
     end
   end
   
-  def random_within_range(rng)
+  def random_within_range(min,max)
     srand
-    rand * (rng.max - rng.min) + rng.min
+    rand * (max - min) + min
   end
   
 end

@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__),'..','packer')
+require File.join(File.dirname(__FILE__),'..','lib','packing')
 require 'test/unit'
 require 'shoulda'
 require 'ruby-debug'

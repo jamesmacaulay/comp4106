@@ -70,13 +70,13 @@ class FuzzyController
     volume_mid = volume_max / 2.0
     volume_half_scale = (volume_max - volume_min) / 2.0
     
-    hot_rate_max = plant.rate_ranges[:hot_water].max.to_f
-    hot_rate_min = plant.rate_ranges[:hot_water].min.to_f
+    hot_rate_max = plant.rate_ranges[:hot_water][:max].to_f
+    hot_rate_min = plant.rate_ranges[:hot_water][:min].to_f
     hot_rate_mid = (hot_rate_max + hot_rate_min) / 2.0
     hot_rate_half_scale = (hot_rate_max - hot_rate_min) / 2.0
     
-    cold_rate_max = plant.rate_ranges[:cold_water].max.to_f
-    cold_rate_min = plant.rate_ranges[:cold_water].min.to_f
+    cold_rate_max = plant.rate_ranges[:cold_water][:max].to_f
+    cold_rate_min = plant.rate_ranges[:cold_water][:min].to_f
     cold_rate_mid = (cold_rate_max + cold_rate_min) / 2.0
     cold_rate_half_scale = (cold_rate_max - cold_rate_min) / 2.0
     

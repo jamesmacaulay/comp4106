@@ -6,7 +6,7 @@ class PlantTest < Test::Unit::TestCase
 
     context "#initialize" do
       should "take a hash of options and produce a corresponding core" do
-        
+        Plant.new
         100.times do
           begin
             plant = Plant.new
