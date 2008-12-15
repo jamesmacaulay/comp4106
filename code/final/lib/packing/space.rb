@@ -2,31 +2,34 @@ module Packing
   # Spaces are always n-dimensional with edges that run parallel to the axes,
   # so no putting items on a diagonal of any kind.
   class Space
+    include Comparable
+    def empty?
+      true
+    end
+    
     # :measurements -- an array of one measurement for each axis, e.g. [x,y,z]
     # :offsets -- an array of each axis' offset from the origin, defaults to zeroes
     def initialize(options={})
+      @@axes_array = {}
+      
       raise ArgumentError, "requires a proper array of :measurements" unless options[:measurements] && options[:measurements].is_a?(Array) && options[:measurements].any? && options[:measurements].all? {|m| m.is_a?(Numeric) && m > 0}
-      @measurements = (@original_measurements = options[:measurements]).dup
+      @measurements = options[:measurements]
       
       raise ArgumentError, ":offsets must be a proper array of offsets" unless options[:offsets].nil? || (options[:offsets].is_a?(Array) && options[:offsets].size == arity && options[:offsets].all? {|o| o.is_a?(Numeric) && o >= 0})
       @offsets = options[:offsets] || ([0] * arity)
       
-      @indexes = (0..(arity - 1)).to_a
+      @axes = @@axes_array[arity] ||= (0..(arity - 1)).to_a
       
       #raise ArgumentError, ":overlappers must be an array of other spaces" unless options[:overlappers].nil? || options[:overlappers].is_a?(Array) && options[:overlappers].all? {|o| o.is_a?(Space)}
       #@overlappers = options[:overlappers] || []
     end
     
-    def indexes
-      @indexes.dup
+    def axes
+      @axes.dup
     end
     
     def measurements
       @measurements.dup
-    end
-    
-    def original_measurements
-      @original_measurements.dup
     end
     
     def offsets
@@ -40,7 +43,7 @@ module Packing
     
     def far_offsets
       @far_offsets ||= {}
-      @far_offsets[@measurements] ||= @indexes.map {|i| @offsets[i] + @measurements[i]}
+      @far_offsets[@measurements] ||= @axes.map {|i| @offsets[i] + @measurements[i]}
     end
     
     def arity
@@ -88,7 +91,7 @@ module Packing
     # returns the intersection of this space and another
     def &(other_space)
       options = {:offsets => [], :measurements => []}
-      indexes.each do |i|
+      @axes.each do |i|
         line1 = [@offsets[i], far_offsets[i]]
         line2 = [other_space.offsets[i], other_space.far_offsets[i]]
         return nil unless intersection = self.class.linear_intersection(line1,line2)
@@ -101,36 +104,27 @@ module Packing
     # returns an array of maximum-size overlapping spaces which combine to exactly
     # compliment an intersection in forming the whole of this space.
     def split_on(other_space)
-      option_hashes = []
-      indexes.each do |i|
-        line1 = [@offsets[i], far_offsets[i]]
-        line2 = [other_space.offsets[i], other_space.far_offsets[i]]
-        return nil unless intersection = self.class.linear_intersection(line1,line2)
-        
-        options[:offsets] << intersection.first
-        options[:measurements] << intersection.last - intersection.first
+      spaces = []
+      @axes.each do |i|
+        self_line = [@offsets[i], far_offsets[i]]
+        other_line = [other_space.offsets[i], other_space.far_offsets[i]]
+        return [self.dup] unless [self_line] != (split = self.class.linear_split(self_line,other_line))
+        split.each do |line|
+          these_offsets = offsets
+          these_offsets[i] = line.first
+          these_far_offsets = far_offsets
+          these_far_offsets[i] = line.last
+          these_measurements = @axes.map {|j| these_far_offsets[j] - these_offsets[j]}
+          spaces << Space.new(:measurements => these_measurements, :offsets => these_offsets)
+        end
       end
+      spaces
     end
     
     def contains_point?(point_offsets)
       raise ArgumentError, "point must be a proper array of offsets" unless point_offsets && point_offsets.is_a?(Array) && point_offsets.size == arity && point_offsets.all? {|o| o.is_a?(Numeric) && o >= 0}
-      @indexes.each {|i| return false if point_offsets[i] < offsets[i] || point_offsets[i] > far_offsets[i]}
+      @axes.each {|i| return false if point_offsets[i] < offsets[i] || point_offsets[i] > far_offsets[i]}
       return true
-    end
-    
-    # mapping is an array of indexes
-    # [2,0,1] would transform measurements [1,2,3] to [3,1,2]
-    def rotate(mapping)
-      raise ArgumentError, "requires an array of indexes" unless mapping.sort == @indexes
-      @measurements = mapping.map {|m| @measurements[m]}
-    end
-    
-    def rotate_mapping_permutations
-      @rotate_mapping_permutations ||= @indexes.permutations
-    end
-    
-    def reset_rotation
-      @measurements = @original_measurements
     end
     
     def can_fit_inside?(other_space, options = {})
@@ -147,11 +141,37 @@ module Packing
     end
     
     def ==(other)
-      self.offsets == other.offsets && self.measurements == other.measurements && self.original_measurements == other.original_measurements
+      @offsets == other.offsets && @measurements == other.measurements
     end
     
     def eql?(other)
       other.is_a?(self.class) && self == other
+    end
+    
+    def <=>(other)
+      if (axes_comparison = @axes <=> other.axes) != 0
+        return axes_comparison
+      elsif (volume_comparison = self.volume <=> other.volume) != 0
+        return volume_comparison
+      elsif (sum_comparison = @offsets.sum <=> other.offsets.sum) != 0
+        return sum_comparison
+      else
+        @axes.each do |i|
+          # "bottom up"
+          if (single_axis_comparison = other.offsets[i] <=> @offsets[i]) != 0
+            return single_axis_comparison
+          end
+        end
+      end
+      return 0
+    end
+    
+    def dup
+      self.class.new(:measurements => measurements, :offsets => offsets)
+    end
+    
+    def inspect
+      "#<#{self.class.name}.new(:measurements => #{@measurements.inspect}, :offsets => #{@offsets.inspect})>"
     end
     
     # [0,1],[1,2]
