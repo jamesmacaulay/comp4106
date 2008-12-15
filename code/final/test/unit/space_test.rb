@@ -69,6 +69,17 @@ class SpaceTest < Test::Unit::TestCase
         assert_equal [1,2], Space.linear_intersection([0,2],[1,3])
         assert_equal [1,2], Space.linear_intersection([1,3],[0,2])
         assert_equal [1,3], Space.linear_intersection([1,3],[0,4])
+        assert_equal nil,   Space.linear_intersection([1,3],[3,4])
+      end
+    end
+    
+    context ".linear_split" do
+      should "return the correct resulting lines when line1 splits on line2" do
+        assert_equal [[0,1]],       Space.linear_split([0,2],[1,3])
+        assert_equal [[2,3]],       Space.linear_split([1,3],[0,2])
+        assert_equal [[0,1],[3,4]], Space.linear_split([0,4],[1,3])
+        assert_equal [],            Space.linear_split([1,3],[0,4]) # first completely contained in second
+        assert_equal [[1,3]],       Space.linear_split([1,3],[3,4])
       end
     end
     

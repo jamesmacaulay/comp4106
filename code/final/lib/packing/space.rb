@@ -85,6 +85,7 @@ module Packing
       end
     end
     
+    # returns the intersection of this space and another
     def &(other_space)
       options = {:offsets => [], :measurements => []}
       indexes.each do |i|
@@ -92,9 +93,23 @@ module Packing
         line2 = [other_space.offsets[i], other_space.far_offsets[i]]
         return nil unless intersection = self.class.linear_intersection(line1,line2)
         options[:offsets] << intersection.first
-        options[:measurements] << intersection.last - intersection.first
+        options[:measurements] << (intersection.last - intersection.first)
       end
       Space.new(options)
+    end
+    
+    # returns an array of maximum-size overlapping spaces which combine to exactly
+    # compliment an intersection in forming the whole of this space.
+    def split_on(other_space)
+      option_hashes = []
+      indexes.each do |i|
+        line1 = [@offsets[i], far_offsets[i]]
+        line2 = [other_space.offsets[i], other_space.far_offsets[i]]
+        return nil unless intersection = self.class.linear_intersection(line1,line2)
+        
+        options[:offsets] << intersection.first
+        options[:measurements] << intersection.last - intersection.first
+      end
     end
     
     def contains_point?(point_offsets)
@@ -118,7 +133,7 @@ module Packing
       @measurements = @original_measurements
     end
     
-    def can_fit_inside?(other_space,options = {})
+    def can_fit_inside?(other_space, options = {})
       rotatable = (options.has_key?(:rotatable) ? options[:rotatable] : true)
       other_measurements = (rotatable ? other_space.measurements.sort : other_space.measurements)
       (rotatable ? @measurements.sort : @measurements).each_with_index do |m,i|
@@ -127,21 +142,8 @@ module Packing
       return true
     end
     
-    def can_contain?(other_space)
-      other_space.can_fit_inside?(self)
-    end
-    
-    def self.linear_collision?(line1,line2)
-      lines = setup_linear_comparison(line1,line2)
-      return lines.last.first < lines.first.last
-    end
-    
-    def self.linear_intersection(line1,line2)
-      lines = setup_linear_comparison(line1,line2)
-      return nil unless lines.last.first < lines.first.last
-      near_offset = lines.last.first
-      far_offset = [lines.first.last, lines.last.last].min
-      [near_offset,far_offset]
+    def can_contain?(other_space, options = {})
+      other_space.can_fit_inside?(self, options)
     end
     
     def ==(other)
@@ -152,7 +154,39 @@ module Packing
       other.is_a?(self.class) && self == other
     end
     
+    # [0,1],[1,2]
+    #=> false
+    # [0,2],[1,3]
+    #=> true
+    def self.linear_collision?(line1,line2)
+      lines = setup_linear_comparison(line1,line2)
+      return sorted_lines_have_collision?(lines)
+    end
+    
+    # [0,1],[1,2]
+    #=> nil
+    # [0,2],[1,3]
+    #=> [1,2]
+    def self.linear_intersection(line1,line2)
+      lines = setup_linear_comparison(line1,line2)
+      return nil unless sorted_lines_have_collision?(lines)
+      near_offset = lines.last.first
+      far_offset = [lines.first.last, lines.last.last].min
+      [near_offset,far_offset]
+    end
+    
+    def self.linear_split(this_line,that_line)
+      intersection = linear_intersection(this_line,that_line)
+      return [this_line] unless intersection
+      split = [[this_line.first, intersection.first], [intersection.last, this_line.last]]
+      split.reject {|line| line.first == line.last}
+    end
+    
     protected
+    
+    def self.sorted_lines_have_collision?(lines)
+      lines.last.first < lines.first.last
+    end
     
     def self.setup_linear_comparison(line1,line2)
       [line1,line2].each do |arg|
