@@ -1,6 +1,6 @@
 module Packing
   class Item < Space
-    @@rotate_mapping_permutations = []
+    @@rotation_mapping_permutations = []
     def empty?
       false
     end
@@ -28,8 +28,14 @@ module Packing
       @measurements = mapping.map {|m| @measurements[m]}
     end
     
-    def rotate_mapping_permutations
-      @@rotate_mapping_permutations[arity] ||= @indexes.permutations
+    def rotate_to_position(new_measurements)
+      validate_measurements(new_measurements, :name => "measurements")
+      raise ArgumentError, "measurements must be a valid rotating of existing measurements" unless new_measurements.sort == @measurements.sort
+      @measurements = new_measurements
+    end
+    
+    def rotation_mapping_permutations
+      @@rotation_mapping_permutations[arity] ||= @indexes.permutations
     end
     
     def reset_rotation

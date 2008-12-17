@@ -68,12 +68,12 @@ class SpaceTest < Test::Unit::TestCase
       should "return the the correct split when it is completely contained in self" do
         contained = Space.new(:measurements => [1,1,1], :offsets => [2,2,2])
         expected = [
-          Space.new(:measurements = [1, 10, 15], :offsets = [1, 1, 1]),
-          Space.new(:measurements = [3, 10, 15], :offsets = [3, 1, 1]),
-          Space.new(:measurements = [5, 1, 15], :offsets = [1, 1, 1]),
-          Space.new(:measurements = [5, 8, 15], :offsets = [1, 3, 1]),
-          Space.new(:measurements = [5, 10, 1], :offsets = [1, 1, 1]),
-          Space.new(:measurements = [5, 10, 13], :offsets = [1, 1, 3])
+          Space.new(:measurements => [1, 10, 15], :offsets => [1, 1, 1]),
+          Space.new(:measurements => [3, 10, 15], :offsets => [3, 1, 1]),
+          Space.new(:measurements => [5, 1, 15], :offsets => [1, 1, 1]),
+          Space.new(:measurements => [5, 8, 15], :offsets => [1, 3, 1]),
+          Space.new(:measurements => [5, 10, 1], :offsets => [1, 1, 1]),
+          Space.new(:measurements => [5, 10, 13], :offsets => [1, 1, 3])
         ]
         assert_equal expected, @space.split_on(contained)
       end

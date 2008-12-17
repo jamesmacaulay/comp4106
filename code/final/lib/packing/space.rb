@@ -3,25 +3,25 @@ module Packing
   # so no putting items on a diagonal of any kind.
   class Space
     include Comparable
+    include Validations
+    
     def empty?
       true
     end
     
+    attr_reader :overlappers
+    
     # :measurements -- an array of one measurement for each axis, e.g. [x,y,z]
     # :offsets -- an array of each axis' offset from the origin, defaults to zeroes
+    # :overlappers -- an array of other spaces which overlap this one; each space is responsible for updating overlappers when split
     def initialize(options={})
       @@axes_array = {}
       
-      raise ArgumentError, "requires a proper array of :measurements" unless options[:measurements] && options[:measurements].is_a?(Array) && options[:measurements].any? && options[:measurements].all? {|m| m.is_a?(Numeric) && m > 0}
-      @measurements = options[:measurements]
-      
-      raise ArgumentError, ":offsets must be a proper array of offsets" unless options[:offsets].nil? || (options[:offsets].is_a?(Array) && options[:offsets].size == arity && options[:offsets].all? {|o| o.is_a?(Numeric) && o >= 0})
-      @offsets = options[:offsets] || ([0] * arity)
+      @measurements = validate_measurements(options[:measurements])
+      @offsets = validate_offsets(options[:offsets], :allow_nil => true) || ([0] * arity)
+      @overlappers = validate_spaces(options[:overlappers], :allow_nil => true, :name => ":overlappers") || []
       
       @axes = @@axes_array[arity] ||= (0..(arity - 1)).to_a
-      
-      #raise ArgumentError, ":overlappers must be an array of other spaces" unless options[:overlappers].nil? || options[:overlappers].is_a?(Array) && options[:overlappers].all? {|o| o.is_a?(Space)}
-      #@overlappers = options[:overlappers] || []
     end
     
     def axes
@@ -54,16 +54,12 @@ module Packing
       @volume ||= (@measurements.inject(1) {|product,m| product *= m})
     end
     
-    # def overlappers
-    #   @overlappers.dup
-    # end
-    
-    # def replace_overlapper(original, replacements)
-    #   replacements = [replacements].flatten
-    #   @overlappers.delete(original)
-    #   @overlappers += replacements
-    #   self
-    # end
+    def replace_overlapper(original, replacements)
+      replacements = [replacements].flatten
+      @overlappers.delete(original)
+      @overlappers += replacements
+      self
+    end
     
     def corners
       @corners ||= {}
@@ -125,6 +121,14 @@ module Packing
       raise ArgumentError, "point must be a proper array of offsets" unless point_offsets && point_offsets.is_a?(Array) && point_offsets.size == arity && point_offsets.all? {|o| o.is_a?(Numeric) && o >= 0}
       @axes.each {|i| return false if point_offsets[i] < offsets[i] || point_offsets[i] > far_offsets[i]}
       return true
+    end
+    
+    def contains?(space_or_point)
+      if space_or_point.is_a?(Space)
+        return self & space == space
+      else
+        return contains_point?(point_offsets)
+      end
     end
     
     def can_fit_inside?(other_space, options = {})
