@@ -6,7 +6,7 @@ module Packing
     include Comparable
     include Validations
     
-    attr_reader :container
+    attr_accessor :container
     
     # :measurements -- an array of one measurement for each axis, e.g. [x,y,z]
     # :offsets -- an array of each axis' offset from the origin, defaults to zeroes
@@ -18,6 +18,7 @@ module Packing
       @offsets = validate_offsets(options[:offsets], :allow_nil => true) || ([0] * arity)
       @overlappers = validate_spaces(options[:overlappers], :allow_nil => true, :name => ":overlappers") || []
       @container = validate_spaces(options[:container], :class => Container, :allow_nil => true)
+      raise 'hell' if @container.nil? and !self.is_a?(Item)
       
       @axes ||= @@axes_array[arity] ||= (0..(arity - 1)).to_a
     end
@@ -77,7 +78,7 @@ module Packing
         options[:offsets] << intersection.first
         options[:measurements] << (intersection.last - intersection.first)
       end
-      Space.new(options)
+      Space.new(options.merge(:container => @container))
     end
     
     # returns an array of maximum-size overlapping spaces which combine to exactly
@@ -87,7 +88,7 @@ module Packing
       @axes.each do |i|
         self_line = [@offsets[i], far_offsets[i]]
         other_line = [other_space.offsets[i], other_space.far_offsets[i]]
-        return [self.dup] unless [self_line] != (split = self.class.linear_split(self_line,other_line))
+        return [Space.new(:measurements => measurements, :offsets => offsets, :container => @container)] unless [self_line] != (split = self.class.linear_split(self_line,other_line))
         split.each do |line|
           these_offsets = offsets
           these_offsets[i] = line.first
@@ -115,6 +116,7 @@ module Packing
     end
     
     def can_fit_inside?(other_space, options = {})
+      return false unless other_space.empty?
       rotatable = (options.has_key?(:rotatable) ? options[:rotatable] : true)
       other_measurements = (rotatable ? other_space.measurements.sort : other_space.measurements)
       (rotatable ? @measurements.sort : @measurements).each_with_index do |m,i|
@@ -158,7 +160,7 @@ module Packing
     end
     
     def inspect
-      "#<#{self.class.name}.new(:measurements => #{@measurements.inspect}, :offsets => #{@offsets.inspect})>"
+      "#<#{self.class.name}.new(:measurements => #{@measurements.inspect}, :offsets => #{@offsets.inspect}, :container => #{@container.nil? ? 'nil' : @container.measurements.inspect})>"
     end
     
     # [0,1],[1,2]

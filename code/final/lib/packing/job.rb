@@ -59,36 +59,44 @@ module Packing
     
     def optimal_unpacked_item(&block)
       optimal = @unpacked_items.first
-      @unpacked_items.each {|i| optimal = i if (optimal.nil? || yield(optimal,i))
+      @unpacked_items.each {|i| optimal = i if (optimal.nil? || yield(optimal,i))}
       optimal
     end
     
     def optimal_space_for_item(item,&block)
       ary = spaces
       optimal = nil
-      ary.each {|s| optimal = s if s.can_contain?(item) && yield(optimal,s,item)}
+      ary.each do |s|
+        debugger if s.container.nil?
+        optimal = s if s.can_contain?(item) && yield(optimal,s,item)
+      end
       optimal
     end
     
     def optimal_container(&block)
       optimal = @container_templates.first
-      @container_templates.each {|c| optimal = c if container_can_contain_something?(c) && yield(optimal,c)
+      @container_templates.each {|c| optimal = c if container_can_contain_something?(c) && yield(optimal,c)}
       optimal
     end
     
     def take_container(container_index)
-      @containers << @container_templates[container_index].dup
+      puts "taking container"
+      container = container_index.is_a?(Container) ? container_index : @container_templates[container_index]
+      @containers << container.dup
     end
     
     def place_item_in_space(item_index,space,&block)
+      puts "placing item in space"
       place_item_in_space!(item_index,space,&block)
     rescue InvalidPlacementError
       nil
     end
     
     def place_item_in_space!(item_index,space,&block)
-      item = item_index.is_a?(Item) ? item : @unpacked_items[item_index]
-      space.container.place_item_in_space!(item,space)
+      item = item_index.is_a?(Item) ? item_index : @unpacked_items[item_index]
+      item_index = item_index.is_a?(Item) ? @unpacked_items.index(item_index) : item_index
+      debugger unless space.empty?
+      space.container.place_item_in_space!(item,space,&block)
       @unpacked_items.delete_at(item_index)
       @packed_items << item
     end
@@ -109,13 +117,15 @@ module Packing
     end
     
     def container_weight(container)
+      #debugger if container.nil?
       unpacked_item_count = @unpacked_items.size
       @container_weights[unpacked_item_count] ||= {}
       hash = @container_weights[unpacked_item_count]
       key = container.measurements.sort.inspect
       if hash.has_key?(key)
-        return @container_weights[key]
+        return hash[key]
       end
+      #debugger if container.weight.nil?
       hash[key] = container.weight
     end
     
@@ -131,7 +141,7 @@ module Packing
     end
     
     def item_can_fit_somewhere?(item_index)
-      item = item_index.is_a?(Item) ? item : @unpacked_items[item_index]
+      item = item_index.is_a?(Item) ? item_index : @unpacked_items[item_index]
       item_key = item.measurements.sort.inspect
       if @items_can_fit_in_containers.has_key?(item_key)
         return @items_can_fit_in_containers[item_key]

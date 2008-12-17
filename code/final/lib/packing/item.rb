@@ -9,7 +9,7 @@ module Packing
     def initialize(options={})
       super
       @original_measurements = @measurements.dup
-      @weight = validate_weight(options[:weight])
+      @weight = validate_whole_number(options[:weight], :name => ':weight')
     end
     
     def place_at_offsets(new_offsets)
@@ -27,7 +27,10 @@ module Packing
     # mapping is an array of indexes
     # [2,0,1] would transform measurements [1,2,3] to [3,1,2]
     def rotate(mapping)
-      raise ArgumentError, "requires an array of indexes" unless mapping.sort == @indexes
+      raise ArgumentError, "requires an array of indexes" unless mapping.sort == @axes
+    rescue
+      debugger
+    ensure
       @measurements = mapping.map {|m| @measurements[m]}
     end
     
@@ -38,7 +41,7 @@ module Packing
     end
     
     def rotation_mapping_permutations
-      @@rotation_mapping_permutations[arity] ||= @indexes.permutations
+      @@rotation_mapping_permutations[arity] ||= @axes.permutations
     end
     
     def reset_rotation

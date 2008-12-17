@@ -21,26 +21,31 @@ module Packing
     end
     
     def weight
-      self.weight + spaces.sum {|s| s.weight}
+      @weight_without_contents + spaces.sum {|s| s.weight}
     end
     
-    def place_item_in_space(item, space, options={})
-      place_item_in_space!(item, space, options)
+    def place_item_in_space(item, space, options={}, &block)
+      place_item_in_space!(item, space, options, &block)
     rescue InvalidPlacementError
       nil
     end
     
     def place_item_in_space!(item, space, options={}, &block)
       raise InvalidPlacementError, "that item could never fit inside that space" unless space.can_contain?(item)
+      raise InvalidPlacementError, "an item cannot be put in another item" unless space.empty?
       yield(item,space)
       
+      #debugger if @space_hash[[10, 0, 100]]
       new_spaces = space.split_on(item)
+      debugger if item.measurements == [10, 150, 100]
+      new_spaces += [item]
       space.overlappers.each do |s|
         new_spaces << s.split_on(item)
         delete_space(s)
       end
       delete_space(space)
       add_spaces(new_spaces)
+      item.container = self
     end
     
     def spaces
@@ -59,7 +64,7 @@ module Packing
     
     def add_spaces(*new_spaces)
       new_spaces.flatten.each do |s|
-        raise InvalidPlacementError, "there is already a space at that location!" if @space_hash.has_key?(s.offsets)
+        raise InvalidPlacementError, "there is already a space at that location!" if @space_hash.has_key?(s.offsets) rescue debugger
         @space_hash[s.offsets] = s
       end
     end

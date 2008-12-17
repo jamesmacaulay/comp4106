@@ -18,7 +18,7 @@ module Packing
     end
     
     def validate_whole_number(this_number, options={})
-      raise ArgumentError, (options[:message] || "requires a non-negative #{options[:name]}") unless (options[:allow_nil] && this_number.nil?) && (this_number.is_a?(Numeric) && this_number > 0)
+      raise ArgumentError, (options[:message] || "requires a non-negative #{options[:name]}") unless (options[:allow_nil] && this_number.nil?) || (this_number.is_a?(Numeric) && this_number >= 0)
       this_number
     end
   end

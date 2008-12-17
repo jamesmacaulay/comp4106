@@ -1,0 +1,33 @@
+James MacAulay
+COMP 4106
+December 17, 2008
+Final Project
+
+A Genetic Programming Approach to the n-Dimensional Bin-Packing Problem
+
+The goal of this program is to solve a variant of the bin-packing problem for n-dimensional spaces. The variant dealt with in this program is as follows:
+
+A worker is tasked to pack some finite number of items into any number of containers. The worker is provided with a limited number of container types (templates), each representing an infinite supply of that type of container. Each container and item has millimetre measurements in n-dimensions and a weight in grams. Each container type also has a cost which is used to calculate fitness of the worker's solution. The task is finished when all items that can fit inside at least one of the container types have been placed somewhere in a container.
+
+My implementation of this problem involves a number of classes. "Spaces" are either items ("filled spaces") or they are empty spaces in containers in which items can be placed. Each Space is always an n-dimensional box with edges parallel to the dimensional axes. Spaces have non-negative integer offsets, which represent their displacement along each axis from their container's origin. They can be "split on" another space, which returns a set of spaces which overlap each other, but not the given (argument) space. The returned spaces, along with the argument space, end up exactly filling the space that was split. This splitting process occurs when an item is placed in an empty space.
+
+The "Item" class inherits from Space, and adds the additional functionality of rotation. Items can have a zero or non-zero weight.
+
+"Containers" have Spaces inside them, but are not Spaces themselves. Containers have methods for placing items in particular Spaces within them.
+
+A "Job" represents the particular task that a Worker is meant to solve. It is initialized with a set of Containers (as prototypes from which copies are made) and a set of Items, which are later managed to distinguish between packed and unpacked Items, etc.
+
+The "Worker" is there to perform the Job. It is initialized with a Job and an optional array of Floats between -1.0 and 1.0 which represents its "DNA." The Worker's "perform" method starts it working on the Job with a main loop which only stops when the job is finished. Each run through the loop determines whether
+
+ a) the current Item should be placed in a Container, or
+ b) a new Container should be taken from the Job's supply (i.e. copied from on of the Container templates).
+
+The Job's biggest Items are placed first. A new Container is taken when the current Item cannot fit inside any of the Spaces in any existing (already taken) Container. If an Item is too big to fit in any of the Container templates, it is necessarily "abandoned."
+
+The Worker's logic for
+
+ a) picking which Container to take next,
+ b) picking which space to place an Item in, and
+ c) determining how to offset and rotate the Item to fit in that Space
+ 
+is determined by its DNA. A general structure for using different variables in each of these sub-tasks is provided in the Worker class itself. Each of the variables is multiplied by its own Float in the Worker's DNA to make that variable either positively or negatively affect the outcome of the algorithm.
