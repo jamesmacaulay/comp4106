@@ -4,21 +4,24 @@ module Packing
     def empty?
       false
     end
+    attr_reader :weight
     
     def initialize(options={})
       super
       @original_measurements = @measurements.dup
-      
-      raise ArgumentError, "requires a weight" unless options[:weight] && options[:weight].is_a?(Numeric) && options[:weight] > 0
-      @weight = options[:weight]
+      @weight = validate_weight(options[:weight])
+    end
+    
+    def place_at_offsets(new_offsets)
+      @offsets = validate_offsets(new_offsets)
+    end
+    
+    def dup
+      self.class.new(:measurements => measurements, :offsets => offsets, :weight => weight)
     end
     
     def original_measurements
       @original_measurements.dup
-    end
-    
-    def weight
-      @weight.dup
     end
     
     # mapping is an array of indexes

@@ -2,14 +2,11 @@ module Packing
   # Spaces are always n-dimensional with edges that run parallel to the axes,
   # so no putting items on a diagonal of any kind.
   class Space
+    include Dimensional
     include Comparable
     include Validations
     
-    def empty?
-      true
-    end
-    
-    attr_reader :overlappers
+    attr_reader :container
     
     # :measurements -- an array of one measurement for each axis, e.g. [x,y,z]
     # :offsets -- an array of each axis' offset from the origin, defaults to zeroes
@@ -20,16 +17,17 @@ module Packing
       @measurements = validate_measurements(options[:measurements])
       @offsets = validate_offsets(options[:offsets], :allow_nil => true) || ([0] * arity)
       @overlappers = validate_spaces(options[:overlappers], :allow_nil => true, :name => ":overlappers") || []
+      @container = validate_spaces(options[:container], :class => Container, :allow_nil => true)
       
-      @axes = @@axes_array[arity] ||= (0..(arity - 1)).to_a
+      @axes ||= @@axes_array[arity] ||= (0..(arity - 1)).to_a
+    end
+    
+    def overlappers
+      @overlappers.dup
     end
     
     def axes
       @axes.dup
-    end
-    
-    def measurements
-      @measurements.dup
     end
     
     def offsets
@@ -44,21 +42,6 @@ module Packing
     def far_offsets
       @far_offsets ||= {}
       @far_offsets[@measurements] ||= @axes.map {|i| @offsets[i] + @measurements[i]}
-    end
-    
-    def arity
-      @arity ||= @measurements.size
-    end
-    
-    def volume
-      @volume ||= (@measurements.inject(1) {|product,m| product *= m})
-    end
-    
-    def replace_overlapper(original, replacements)
-      replacements = [replacements].flatten
-      @overlappers.delete(original)
-      @overlappers += replacements
-      self
     end
     
     def corners
@@ -111,7 +94,7 @@ module Packing
           these_far_offsets = far_offsets
           these_far_offsets[i] = line.last
           these_measurements = @axes.map {|j| these_far_offsets[j] - these_offsets[j]}
-          spaces << Space.new(:measurements => these_measurements, :offsets => these_offsets)
+          spaces << Space.new(:measurements => these_measurements, :offsets => these_offsets, :container => @container)
         end
       end
       spaces

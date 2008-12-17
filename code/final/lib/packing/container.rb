@@ -1,14 +1,27 @@
 module Packing
   class Container
-    attr_reader :cost, :id
+    include Dimensional
+    include Validations
+    
+    attr_reader :cost, :weight_without_contents #, :id
     def initialize(options={})
-      raise ArgumentError, "requires a :cost" unless options[:cost] && options[:cost].is_a?(Numeric) && options[:cost] >= 0
-      validate_measurements(options[:measurements])
-      raise ArgumentError, "requires an :id" unless options[:id] && (options[:id].is_a?(Numeric) || options[:id].is_a?(String) || options[:id].is_a?(Symbol))
+      @measurements = validate_measurements(options[:measurements])
+      @weight_without_contents = validate_whole_number(options[:weight], :name => ':weight', :allow_nil => true) || 0
+      @cost = validate_whole_number(options[:cost], :name => ':cost', :allow_nil => true) || 0
       
-      @cost = options[:cost]
-      @id = options[:id]
-      @spaces = {[0,0,0] => Space.new(options.slice(:measurements))}
+      @space_hash = {[0,0,0] => Space.new(options.slice(:measurements).merge(:container => self))}
+    end
+    
+    def dup
+      self.class.new(:measurements => measurements, :cost => cost, :weight => weight)
+    end
+    
+    def empty?
+      spaces.all? {|s| s.empty?}
+    end
+    
+    def weight
+      self.weight + spaces.sum {|s| s.weight}
     end
     
     def place_item_in_space(item, space, options={})
@@ -17,12 +30,9 @@ module Packing
       nil
     end
     
-    def place_item_in_space!(item, space, options={})
-      if options[:force]
-        raise InvalidPlacementError, "that item could never fit inside that space" unless space.can_contain?(item)
-        
-      end
-      raise InvalidPlacementError, "that item is not contained by that space" unless space.contains?(item)
+    def place_item_in_space!(item, space, options={}, &block)
+      raise InvalidPlacementError, "that item could never fit inside that space" unless space.can_contain?(item)
+      yield(item,space)
       
       new_spaces = space.split_on(item)
       space.overlappers.each do |s|
@@ -33,16 +43,24 @@ module Packing
       add_spaces(new_spaces)
     end
     
+    def spaces
+      @space_hash.values
+    end
+    
+    def can_contain?(item)
+      spaces.any? {|s| s.can_contain?(item)}
+    end
+    
     private
     
     def delete_space(s)
-      @spaces.delete(s.offsets)
+      @space_hash.delete(s.offsets)
     end
     
     def add_spaces(*new_spaces)
       new_spaces.flatten.each do |s|
-        raise InvalidPlacementError, "there is already a space at that location!" if @spaces.has_key?(s.offsets)
-        @spaces[s.offsets] = s
+        raise InvalidPlacementError, "there is already a space at that location!" if @space_hash.has_key?(s.offsets)
+        @space_hash[s.offsets] = s
       end
     end
   end
